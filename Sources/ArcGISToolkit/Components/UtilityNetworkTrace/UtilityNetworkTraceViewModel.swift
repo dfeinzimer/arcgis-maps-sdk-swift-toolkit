@@ -120,18 +120,18 @@ import SwiftUI
     
     /// Adds new starting points to the pending trace.
     /// - Parameters:
-    ///   - screenPoint: A point on the map in screen coordinates.
     ///   - mapPoint: A point on the map in map coordinates.
     ///   - proxy: Provides a method of layer identification.
     ///
     /// An identify operation will run on each layer in the network. Every element returned from
     /// each layer will be added as a new starting point.
-    func addStartingPoints(at screenPoint: CGPoint, mapPoint: Point, with proxy: MapViewProxy) async {
+    func addStartingPoints(mapPoint: Point, with proxy: MapViewProxy) async {
         await withTaskGroup(of: Void.self) { [weak self] taskGroup in
             guard let self else { return }
             for layer in network?.layers ?? [] {
                 taskGroup.addTask { @MainActor @Sendable in
-                    if let result = try? await proxy.identify(on: layer, screenPoint: screenPoint, tolerance: 10) {
+                    if let screenPoint = proxy.screenPoint(fromLocation: mapPoint),
+                       let result = try? await proxy.identify(on: layer, screenPoint: screenPoint, tolerance: 10) {
                         for element in result.geoElements {
                             await self.processAndAdd(
                                 startingPoint: UtilityNetworkTraceStartingPoint(geoElement: element, mapPoint: mapPoint)
@@ -418,10 +418,20 @@ import SwiftUI
                 break
             }
         }
+        
+        // Save the starting points used in this trace
+        let previousStartingPoints = pendingTrace.startingPoints
+        
+        // Save the completed trace and select it
         completedTraces.append(pendingTrace)
         selectedTraceIndex = completedTraces.count - 1
+        
+        // Create and configure a new trace
         pendingTrace = Trace()
-        await addExternalStartingPoints()
+        for startingPoint in previousStartingPoints {
+            await processAndAdd(startingPoint: startingPoint)
+        }
+        
         return true
     }
     
@@ -438,7 +448,14 @@ import SwiftUI
     
     /// Adds programatic starting points to the pending trace.
     private func addExternalStartingPoints() async {
-        for startingPoint in externalStartingPoints {
+        pendingTrace.startingPoints.forEach { startingPoint in
+            if startingPoint.isExternalStartingPoint {
+                deleteStartingPoint(startingPoint)
+            }
+        }
+        
+        for var startingPoint in externalStartingPoints {
+            startingPoint.isExternalStartingPoint = true
             await processAndAdd(startingPoint: startingPoint)
         }
     }

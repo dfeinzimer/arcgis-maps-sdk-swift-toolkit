@@ -32,7 +32,7 @@ struct SiteAndFacilitySelector: View {
     /// A Boolean value indicating whether the user is typing into the text field.
     @FocusState var textFieldIsFocused: Bool
     
-    /// A Boolean value indicating whether the user tapped the "All sites" button.
+    /// A Boolean value indicating whether the user tapped the "All Sites" button.
     @State private var allSitesIsSelected = false
     
     /// The site or facility filter phrase.
@@ -48,12 +48,14 @@ struct SiteAndFacilitySelector: View {
             header
                 .padding([.leading, .top, .trailing])
             if (facilityListIsVisible && matchingFacilities.isEmpty) || (!facilityListIsVisible && matchingSites.isEmpty) {
+                Spacer()
                 if #available(iOS 17, *) {
                     ContentUnavailableView(String.noMatchesFound, systemImage: "building.2")
                 } else {
                     Text(String.noMatchesFound)
                         .frame(maxHeight: .infinity)
                 }
+                Spacer()
             } else if facilityListIsVisible {
                 facilityList
                     .transition(.move(edge: .trailing))
@@ -135,13 +137,9 @@ struct SiteAndFacilitySelector: View {
                         textFieldIsFocused = false
                     }
                 if textFieldIsFocused && !query.isEmpty {
-                    Button {
+                    XButton(.clear) {
                         query.removeAll()
-                    } label: {
-                        Image(systemName: "x.circle.fill")
-                            .renderingMode(.template)
                     }
-                    .foregroundStyle(.secondary)
                 }
             }
             .padding(5)
@@ -164,7 +162,10 @@ struct SiteAndFacilitySelector: View {
                 userDidBackOutToSiteList = true
             } label: {
                 Image(systemName: "chevron.left")
+                    .padding(.toolkitDefault)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .opacity(backButtonIsVisible ? 1 : 0)
             Spacer()
             Group {
@@ -176,14 +177,12 @@ struct SiteAndFacilitySelector: View {
                     Text.sites
                 }
             }
-            .font(.title3)
             Spacer()
-            Button {
+            XButton(.dismiss) {
                 isPresented = false
-            } label: {
-                Image(systemName: "xmark.circle")
             }
         }
+        .font(.title3)
     }
     
     /// A view containing a list of the site names.
@@ -262,7 +261,7 @@ extension SiteAndFacilitySelector {
 private extension String {
     static var allSites: Self {
         .init(
-            localized: "All sites",
+            localized: "All Sites",
             bundle: .toolkitModule,
             comment: "A reference to all of the sites defined in a floor aware map."
         )
