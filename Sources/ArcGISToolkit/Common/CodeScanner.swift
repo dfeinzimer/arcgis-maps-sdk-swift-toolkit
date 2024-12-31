@@ -16,7 +16,6 @@
 import SwiftUI
 
 /// Scans machine readable information like QR codes and barcodes.
-@available(visionOS, unavailable)
 struct CodeScanner: View {
     @Binding var code: String
     
