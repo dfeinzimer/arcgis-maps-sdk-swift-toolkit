@@ -7,7 +7,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main", "v.next" ]
+    branches: [ "v.next" ]
 
 jobs:
   build:
@@ -16,7 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build
+    - name: Build iOS
       run: xcodebuild -scheme arcgis-maps-sdk-swift-toolkit -destination 'platform=iOS Simulator,OS=18.0,name=iPhone 16'
+    - name: Build Mac Catalyst
+      run: xcodebuild -scheme arcgis-maps-sdk-swift-toolkit -destination 'platform=macOS,arch=arm64e,variant=Mac Catalyst,name=My Mac'
     # - name: Run tests
       # run: swift test -v
